@@ -45,7 +45,7 @@ class TodoController extends Controller
 {
     $todos = Todo::all();
 
-    return response()->json($todos, Response::HTTP_OK);
+    return TodoResource::collection($todos);
 }
 
 
@@ -86,7 +86,7 @@ class TodoController extends Controller
         // Tạo một bản ghi mới
         $todo = Todo::create($data);
     
-        return response()->json($todo, Response::HTTP_CREATED);
+        return new TodoResource($todo);
     }
 
     /**
@@ -129,7 +129,7 @@ class TodoController extends Controller
             ], Response::HTTP_NOT_FOUND);
         }
     
-        return response()->json($todo, Response::HTTP_OK);
+        return new TodoResource($todo);
     }
     
 
@@ -182,7 +182,7 @@ class TodoController extends Controller
     $todo->update($data);
 
     // Trả về Todo đã được cập nhật
-    return response()->json($todo, Response::HTTP_OK);
+    return new TodoResource($todo);
 }
 
 
