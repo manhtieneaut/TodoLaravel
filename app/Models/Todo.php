@@ -11,7 +11,7 @@ class Todo extends Model
 
     protected $table='todos';
 
-    protected $filltable = [
+    protected $fillable = [
         'name',
         'body'
     ];

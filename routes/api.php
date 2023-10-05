@@ -16,11 +16,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::post('login', [AuthController::class, 'login']);
+Route::post('logout', [AuthController::class, 'logout']);
+
+// Bảo vệ tất cả tuyến đường todos bằng middleware Sanctum
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    Route::apiResource('todos', TodoController::class);
 });
-
-Route::apiResource(name: 'todos', controller: TodoController::class);
-
-Route::post('login',[AuthController::class,'login']);
-Route::post('logout',[AuthController::class,'logout']);

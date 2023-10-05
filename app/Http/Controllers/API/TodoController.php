@@ -11,15 +11,6 @@ use Illuminate\Http\Response;
 class TodoController extends Controller
 {
 
- 
-    protected $todo;
-
-    public function __construct(Todo $todo)
-    {
-        $this->todo = $todo;
-    }
-    
-
     /**
      * @OA\Get(
      *     path="/api/todos",
@@ -51,15 +42,12 @@ class TodoController extends Controller
      * )
      */
     public function index()
-    {
-        $todos = $this->todo->paginate(5);
+{
+    $todos = Todo::all();
 
-        $todosResource = TodoResource::collection($todos)->response()->getData(assoc: true);
+    return response()->json($todos, Response::HTTP_OK);
+}
 
-        return response()->json([
-            'data' => $todosResource
-        ], status: Response::HTTP_OK);
-    }
 
     /**
      * @OA\Post(
@@ -93,15 +81,12 @@ class TodoController extends Controller
      */
     public function store(Request $request)
     {
-        $todo = $this->todo->create([
-            'title' => $request->input('title'),
-            'description' => $request->input('description'),
-            'due_date' => $request->input('due_date'),
-        ]);
-
-        return response()->json([
-            'data' => new TodoResource($todo)
-        ], status: Response::HTTP_CREATED);
+        $data = $request->only(['name', 'body']);
+    
+        // Tạo một bản ghi mới
+        $todo = Todo::create($data);
+    
+        return response()->json($todo, Response::HTTP_CREATED);
     }
 
     /**
@@ -136,18 +121,17 @@ class TodoController extends Controller
      */
     public function show($id)
     {
-        $todo = $this->todo->find($id);
-
+        $todo = Todo::find($id);
+    
         if (!$todo) {
             return response()->json([
                 'message' => 'Todo not found.',
-            ], status: Response::HTTP_NOT_FOUND);
+            ], Response::HTTP_NOT_FOUND);
         }
-
-        return response()->json([
-            'data' => new TodoResource($todo),
-        ], status: Response::HTTP_OK);
+    
+        return response()->json($todo, Response::HTTP_OK);
     }
+    
 
     /**
      * @OA\Put(
@@ -180,25 +164,27 @@ class TodoController extends Controller
      * )
      */
     public function update(Request $request, $id)
-    {
-        $todo = $this->todo->find($id);
+{
+    // Tìm kiếm Todo theo ID, nếu không tìm thấy sẽ trả về lỗi 404
+    $todo = Todo::findOrFail($id);
 
-        if (!$todo) {
-            return response()->json([
-                'message' => 'Todo not found.',
-            ], status: Response::HTTP_NOT_FOUND);
-        }
-
-        $todo->update([
-            'title' => $request->input('title'),
-            'description' => $request->input('description'),
-            'due_date' => $request->input('due_date'),
-        ]);
-
+    // Kiểm tra xem Todo có tồn tại không
+    if (!$todo) {
         return response()->json([
-            'data' => new TodoResource($todo),
-        ], status: Response::HTTP_OK);
+            'message' => 'Todo not found.',
+        ], Response::HTTP_NOT_FOUND);
     }
+
+    // Lấy dữ liệu từ request
+    $data = $request->only(['name', 'body']);
+
+    // Cập nhật dữ liệu của Todo
+    $todo->update($data);
+
+    // Trả về Todo đã được cập nhật
+    return response()->json($todo, Response::HTTP_OK);
+}
+
 
     /**
      * @OA\Delete(
@@ -231,19 +217,20 @@ class TodoController extends Controller
      * )
      */
     public function destroy($id)
-    {
-        $todo = $this->todo->find($id);
+{
+    $todo = Todo::findOrFail($id);
 
-        if (!$todo) {
-            return response()->json([
-                'message' => 'Todo not found.',
-            ], status: Response::HTTP_NOT_FOUND);
-        }
-
-        $todo->delete();
-
+    if (!$todo) {
         return response()->json([
-            'message' => 'Todo deleted successfully.',
-        ], status: Response::HTTP_OK);
+            'message' => 'Todo not found.',
+        ], Response::HTTP_NOT_FOUND);
     }
+
+    $todo->delete();
+
+    return response()->json([
+        'message' => 'Todo deleted successfully.',
+    ], Response::HTTP_OK);
+}
+
 }

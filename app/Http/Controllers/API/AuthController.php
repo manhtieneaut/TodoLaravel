@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     * @OA\Get(
+     * @OA\Post(
      *     path="/api/login",
      *     tags={"auth"},
      *     summary="Login",
@@ -41,29 +42,24 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required',
+        $request->validate([
+            'email' => 'required|email',
             'password' => 'required',
         ]);
-    
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
         }
-    
-        $credentials = $request->only('email', 'password');
-    
-        if (!Auth::guard('api')->attempt($credentials)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
-        }
-    
-        $user = Auth::guard('api')->user();
-    
-        $token = $user->createToken('api_token');
-    
-        return response()->json([
-            'token' => $token->plainTextToken,
-            'user' => $user,
-        ]);
+
+        // Tạo token và lưu vào biến $token
+        $token = $user->createToken('token')->plainTextToken;
+
+        // Trả về token trong phản hồi
+        return response()->json(['token' => $token]);
     }
 
     /**
